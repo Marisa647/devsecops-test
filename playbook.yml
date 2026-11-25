@@ -1,0 +1,17 @@
+---
+- name: Deploy Nginx + ModSecurity
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Make sure the hamster is running
+      community.docker.docker_container:
+        name: modsec-nginx
+        image: owasp/modsecurity-crs:nginx-alpine
+        state: started
+        restart_policy: always
+        ports:
+          - "8081:8080"
+        env:
+          PARANOIA: "1"
+          ANOMALY_INBOUND: "5"
+          ANOMALY_OUTBOUND: "4"
