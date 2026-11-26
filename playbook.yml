@@ -1,17 +1,53 @@
 ---
-- name: Deploy Nginx + ModSecurity
-  hosts: localhost
-  connection: local
+- name: Deploy Nginx + ModSecurity with OWASP CRS
+  hosts: web
+  become: yes
+  gather_facts: yes
+
   tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Docker
+      apt:
+        name:
+          - docker.io
+        state: present
+
+    - name: Start dockerd manually
+      shell: |
+        pkill dockerd || true
+        sleep 2
+        rm -rf /var/lib/docker
+        dockerd --storage-driver=vfs > /var/log/dockerd.log 2>&1 &
+        sleep 6
+      args:
+        executable: /bin/bash
+
+    - name: Wait for Docker to be ready
+      shell: docker info
+      register: docker_info
+      retries: 15
+      delay: 3
+      until: docker_info.rc == 0
+
+    - name: Pull OWASP ModSecurity CRS image
+      command: docker pull owasp/modsecurity-crs:nginx
+
+    - name: Remove old container if exists
+      command: docker rm -f nginx-modsec
+      ignore_errors: yes
+
     - name: Make sure the hamster is running
-      community.docker.docker_container:
-        name: modsec-nginx
-        image: owasp/modsecurity-crs:nginx-alpine
-        state: started
-        restart_policy: always
-        ports:
-          - "8081:8080"
-        env:
-          PARANOIA: "1"
-          ANOMALY_INBOUND: "5"
-          ANOMALY_OUTBOUND: "4"
+      command: >
+        docker run -d
+        --name nginx-modsec
+        --restart always
+        -p 8080:8080
+        -e BLOCKING_PARANOIA=1
+        -e ANOMALY_INBOUND=5
+        -e ANOMALY_OUTBOUND=4
+        -e MODSEC_RULE_ENGINE=On
+        owasp/modsecurity-crs:nginx
