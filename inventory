@@ -1,2 +1,2 @@
-[local]
-localhost ansible_connection=local
+[web]
+ubu1 ansible_host=10.0.0.2 ansible_user=shogunas ansible_ssh_private_key_file=/root/.ssh/id_ed25519
