@@ -12,8 +12,4 @@
 - Збір логів nginx/ModSecurity у Loki + відображення в Grafana
 - Алерт у Telegram при >5 блокуваннях з однієї IP за короткий проміжок часу
 
-## Запуск Ansible
-
-```bash
-cd /root/devsecops
-ansible-playbook -i inventory/hosts playbooks/nginx-modsec.yml
+Основні проблеми та їх вирішення описані в [docs/ISSUES.md]
